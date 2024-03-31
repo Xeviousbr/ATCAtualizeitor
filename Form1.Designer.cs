@@ -29,13 +29,35 @@ namespace ATCAtualizeitor
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
+            this.progressBar1 = new System.Windows.Forms.ProgressBar();
+            this.SuspendLayout();
+            // 
+            // progressBar1
+            // 
+            this.progressBar1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.progressBar1.Location = new System.Drawing.Point(0, 0);
+            this.progressBar1.Name = "progressBar1";
+            this.progressBar1.Size = new System.Drawing.Size(800, 113);
+            this.progressBar1.TabIndex = 0;
+            // 
+            // Form1
+            // 
+            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 450);
-            this.Text = "Form1";
+            this.ClientSize = new System.Drawing.Size(800, 113);
+            this.Controls.Add(this.progressBar1);
+            this.MaximizeBox = false;
+            this.Name = "Form1";
+            this.Text = "Atualizador";
+            this.Shown += new System.EventHandler(this.Form1_Shown);
+            this.Enter += new System.EventHandler(this.Form1_Enter);
+            this.ResumeLayout(false);
+
         }
 
         #endregion
+
+        private System.Windows.Forms.ProgressBar progressBar1;
     }
 }
 
