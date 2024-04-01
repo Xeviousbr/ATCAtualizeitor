@@ -1,11 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.IO;
 using System.Windows.Forms;
 using TeleBonifacio;
 using TeleBonifacio.gen;
@@ -31,11 +25,22 @@ namespace ATCAtualizeitor
             string user = Cripto.Decrypt(cINI.ReadString("FTP", "user", ""));
             string senha = Cripto.Decrypt(cINI.ReadString("FTP", "pass", ""));
             FTP cFPT = new FTP(URL, user, senha);
-            // Apagar o arquivo localmente se houve
-            // Baixar o novo arquivo
-            if (cFPT.Download(@"/public_html/public/entregas/TeleBonifacio.exe"))
+            string nmPrograma = "TeleBonifacio.exe";
+            string Pasta = @"/public_html/public/entregas/";
+            if (cFPT.Download(Pasta, nmPrograma))
             {
-
+                string pastaprog = cINI.ReadString("Config", "Programa", "");
+                string pastaBak = pastaprog + @"\Bak";
+                if (!Directory.Exists(pastaBak))
+                {
+                    Directory.CreateDirectory(pastaBak);
+                }
+                string pastaLocal = AppDomain.CurrentDomain.BaseDirectory;
+                string arquivoLocal = Path.Combine(pastaLocal, nmPrograma);
+                string arquivoDestino = Path.Combine(pastaprog, nmPrograma);
+                string nmArqBak = pastaprog + @"\Bak" + @"\" + nmPrograma;
+                File.Copy(arquivoDestino, nmArqBak, true);
+                File.Copy(arquivoLocal, arquivoDestino, true);
             }
             Environment.Exit(0);
         }

@@ -165,51 +165,6 @@ namespace TeleBonifacio
             return versaoNumero;
         }
 
-        //public bool Testa()
-        //{
-        //    string StringTeste = "Teste do FtpTeitor";
-        //    string Suri = "ftp://" + this.ftpIPServidor + @"/Teste.tst";
-        //    FtpWebRequest requisicaoFTP;
-        //    requisicaoFTP = (FtpWebRequest)FtpWebRequest.Create(new Uri(Suri));
-        //    requisicaoFTP.Credentials = new NetworkCredential(this.ftpUsuarioID, this.ftpSenha);            
-        //    requisicaoFTP.KeepAlive = false;
-        //    requisicaoFTP.Method = WebRequestMethods.Ftp.UploadFile;
-        //    requisicaoFTP.UseBinary = true;
-        //    requisicaoFTP.ContentLength = 9;
-        //    //int buffLength = 2048;
-        //    byte[] buff = Encoding.ASCII.GetBytes(StringTeste);
-        //    bool ret = false;
-        //    try
-        //    {
-        //        Stream strm = requisicaoFTP.GetRequestStream();
-        //        strm.Write(buff, 0, StringTeste.Length);                
-        //        FtpWebRequest redDown = (FtpWebRequest)WebRequest.Create(Suri);
-        //        redDown.Method = WebRequestMethods.Ftp.DownloadFile;
-        //        redDown.Credentials = new NetworkCredential(this.ftpUsuarioID, this.ftpSenha);
-        //        FtpWebResponse respDown = (FtpWebResponse)redDown.GetResponse();
-        //        Stream responseStream = respDown.GetResponseStream();
-        //        StreamReader readerD = new StreamReader(responseStream);
-        //        string resposta = readerD.ReadToEnd();
-        //        strm.Close();
-        //        readerD.Close();
-        //        respDown.Close();
-        //        ret = true;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        ret= false;
-        //    }
-        //    if (ret)
-        //    {
-        //        // Deleção do arquivo de testes, se der erro na deleção ainda assim a conexão é valida, porque será utilizado para upload
-        //        FtpWebRequest redDel = (FtpWebRequest)WebRequest.Create(Suri);
-        //        redDel.Method = WebRequestMethods.Ftp.DeleteFile;
-        //        redDel.Credentials = new NetworkCredential(this.ftpUsuarioID, this.ftpSenha);
-        //        FtpWebResponse response = (FtpWebResponse)redDel.GetResponse();
-        //        response.Close();
-        //    }
-        //    return ret;
-        //}
         public string getErro()
         {
             return this.Erro;
@@ -221,9 +176,9 @@ namespace TeleBonifacio
             Console.WriteLine("this.ProgressBar1 = ProgressBar1");
         }
 
-        public bool Download(string nmArquivo)
+        public bool Download(string nmPasta, string nomeArquivoLocal)
         {
-            string Suri = "ftp://" + this.ftpIPServidor + @"/" + nmArquivo;
+            string Suri = "ftp://" + this.ftpIPServidor + @"/" + nmPasta+@"/"+ nomeArquivoLocal;
             FtpWebRequest requisicaoFTP;
             requisicaoFTP = (FtpWebRequest)FtpWebRequest.Create(new Uri(Suri));
             requisicaoFTP.Credentials = new NetworkCredential(this.ftpUsuarioID, this.ftpSenha);
@@ -238,8 +193,7 @@ namespace TeleBonifacio
                 using (StreamReader readerD = new StreamReader(responseStream))
                 {
                     string resposta = readerD.ReadToEnd();
-                    string nomeArquivoLocal = nmArquivo.Split('/').Last(); 
-                    File.WriteAllText(nomeArquivoLocal, resposta); 
+                    File.WriteAllText(nomeArquivoLocal, resposta);                                         
                 }
                 respDown.Close();
                 ret = true;
@@ -250,82 +204,7 @@ namespace TeleBonifacio
             }
             return ret;
         }
-
-        //public bool Download(string nmArquivo)
-        //{
-        //    string Suri = "ftp://" + this.ftpIPServidor + @"/" + nmArquivo;
-        //    FtpWebRequest requisicaoFTP;
-        //    requisicaoFTP = (FtpWebRequest)FtpWebRequest.Create(new Uri(Suri));
-        //    requisicaoFTP.Credentials = new NetworkCredential(this.ftpUsuarioID, this.ftpSenha);
-        //    requisicaoFTP.KeepAlive = false;
-        //    requisicaoFTP.Method = WebRequestMethods.Ftp.DownloadFile; 
-        //    requisicaoFTP.UseBinary = true;
-        //    bool ret = false;
-        //    try
-        //    {
-        //        FtpWebResponse respDown = (FtpWebResponse)requisicaoFTP.GetResponse();
-        //        Stream responseStream = respDown.GetResponseStream();
-        //        StreamReader readerD = new StreamReader(responseStream);
-        //        string resposta = readerD.ReadToEnd();
-        //        readerD.Close();
-        //        respDown.Close();
-        //        ret = true;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        ret = false;
-        //    }
-        //    return ret;
-        //}
-
-        //public bool Download(string nmArquivo)
-        //{
-        //    string StringTeste = "Teste do FtpTeitor";
-        //    string Suri = "ftp://" + this.ftpIPServidor + @"/" + nmArquivo;
-        //    FtpWebRequest requisicaoFTP;
-        //    requisicaoFTP = (FtpWebRequest)FtpWebRequest.Create(new Uri(Suri));
-        //    requisicaoFTP.Credentials = new NetworkCredential(this.ftpUsuarioID, this.ftpSenha);
-        //    requisicaoFTP.KeepAlive = false;
-        //    requisicaoFTP.Method = WebRequestMethods.Ftp.UploadFile;
-        //    requisicaoFTP.UseBinary = true;
-        //    requisicaoFTP.ContentLength = 9;
-        //    //int buffLength = 2048;
-        //    byte[] buff = Encoding.ASCII.GetBytes(StringTeste);
-        //    bool ret = false;
-        //    try
-        //    {
-        //        Stream strm = requisicaoFTP.GetRequestStream();
-        //        strm.Write(buff, 0, StringTeste.Length);
-        //        FtpWebRequest redDown = (FtpWebRequest)WebRequest.Create(Suri);
-        //        redDown.Method = WebRequestMethods.Ftp.DownloadFile;
-        //        redDown.Credentials = new NetworkCredential(this.ftpUsuarioID, this.ftpSenha);
-        //        FtpWebResponse respDown = (FtpWebResponse)redDown.GetResponse();
-        //        Stream responseStream = respDown.GetResponseStream();
-        //        StreamReader readerD = new StreamReader(responseStream);
-        //        string resposta = readerD.ReadToEnd();
-        //        strm.Close();
-        //        readerD.Close();
-        //        respDown.Close();
-        //        ret = true;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        ret = false;
-        //    }
-        //    if (ret)
-        //    {
-        //        // Deleção do arquivo de testes, se der erro na deleção ainda assim a conexão é valida, porque será utilizado para upload
-        //        FtpWebRequest redDel = (FtpWebRequest)WebRequest.Create(Suri);
-        //        redDel.Method = WebRequestMethods.Ftp.DeleteFile;
-        //        redDel.Credentials = new NetworkCredential(this.ftpUsuarioID, this.ftpSenha);
-        //        FtpWebResponse response = (FtpWebResponse)redDel.GetResponse();
-        //        response.Close();
-        //    }
-        //    return ret;
-        //}
-
     }
-
 }
 
 
