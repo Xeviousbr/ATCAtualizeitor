@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -13,26 +14,12 @@ namespace TeleBonifacio
     {
         private int _tamanhoConteudo = 0;
         private int Tot = 0;
-        string ftpIPServidor = "";
-        string ftpUsuarioID = "";
-        string ftpSenha = "";
+        private string ftpIPServidor = "";
+        private string ftpUsuarioID = "";
+        private string ftpSenha = "";
         private string Erro = "";
         private ProgressBar ProgressBar1= null;
-
-        public int tamanhoConteudo
-        {
-            get
-            {
-                return _tamanhoConteudo;
-            }
-            set
-            {
-                _tamanhoConteudo = value;
-                Tot += value;
-                this.ProgressBar1.Value = Tot;
-                Console.WriteLine("ProgressBar1.Value = " + Tot.ToString());                
-            }
-        }
+        public long bytesReceived = 0;
 
         public FTP(string ftpIPServidor, string ftpUsuarioID, string ftpSenha)
         {
@@ -43,102 +30,8 @@ namespace TeleBonifacio
 
         public FTP()
         {
+
         }
-
-        public bool Upload(string _nomeArquivo, string Caminho)
-        {
-            this.Tot = 0;
-            string Cam = Caminho.Replace(@"\", @"/");
-            FileInfo _arquivoInfo = new FileInfo(_nomeArquivo);
-            string Suri = "ftp://" + this.ftpIPServidor + @"/" + Cam + _arquivoInfo.Name;
-            FtpWebRequest requisicaoFTP;
-            requisicaoFTP = (FtpWebRequest)FtpWebRequest.Create(new Uri(Suri));
-            requisicaoFTP.Credentials = new NetworkCredential(this.ftpUsuarioID, this.ftpSenha);
-            requisicaoFTP.KeepAlive = false;
-            requisicaoFTP.Method = WebRequestMethods.Ftp.UploadFile;
-            requisicaoFTP.UseBinary = true;
-            requisicaoFTP.ContentLength = _arquivoInfo.Length;
-            this.ProgressBar1.Visible = true;
-            Console.WriteLine("ProgressBar1.Visible = true");
-            this.ProgressBar1.Maximum = (int)_arquivoInfo.Length;
-            Console.WriteLine("ProgressBar1.Maximum = "+ this.ProgressBar1.Maximum.ToString());
-            this.ProgressBar1.Enabled = true;
-            FileStream fs = _arquivoInfo.OpenRead();
-            bool sair = false;
-            bool bReturn = false;
-            while (sair==false) {
-                string ret = this.UploadEmSi(requisicaoFTP, fs);
-                if (ret=="")
-                {
-                    bReturn = true;
-                    sair = true;
-                } else
-                {
-                    if (ret.IndexOf("553") > 0)
-                    {
-                        string sUrlD = "ftp://" + this.ftpIPServidor + Cam;
-                        FtpWebRequest requestCD = (FtpWebRequest)FtpWebRequest.Create(new Uri(sUrlD));
-                        requestCD.Credentials = new NetworkCredential(this.ftpUsuarioID, this.ftpSenha);
-                        requestCD.KeepAlive = false;
-                        requestCD.Method = WebRequestMethods.Ftp.MakeDirectory;
-                        requestCD.Credentials = new NetworkCredential("user", "pass");
-                        try
-                        {
-                            using (var resp = (FtpWebResponse)requestCD.GetResponse())
-                            {
-                                Console.WriteLine(resp.StatusCode);
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            MessageBox.Show("Não foi possivel enviar arquivo", "É necessário criar o diretório");
-                            bReturn = false;
-                            sair = true;
-                        }
-                    }
-                    else
-                    {
-                        MessageBox.Show(ret, "Erro não tratado");
-                        bReturn = false;
-                        sair = true;
-                    }
-                } 
-            }
-            return bReturn;
-        }
-
-        private string UploadEmSi(FtpWebRequest requisicaoFTP, FileStream fs)
-        {
-            try
-            {
-                // Stream  para o qual o arquivo a ser enviado será escrito
-                Stream strm = requisicaoFTP.GetRequestStream();
-
-                int buffLength = 2048;
-                byte[] buff = new byte[buffLength];
-
-                // Lê a partir do arquivo stream, 2k por vez
-                this.tamanhoConteudo = fs.Read(buff, 0, buffLength);
-
-                // ate o conteudo do stream terminar
-                while (this.tamanhoConteudo != 0)
-                {
-                    // Escreve o conteudo a partir do arquivo para o stream FTP 
-                    strm.Write(buff, 0, this.tamanhoConteudo);
-                    this.tamanhoConteudo = fs.Read(buff, 0, buffLength);
-                }
-
-                // Fecha o stream a requisição
-                strm.Close();
-                fs.Close();
-                return "";
-            }
-            catch (Exception ex)
-            {
-                return ex.Message;
-            }
-        }
-
         public int LerVersaoDoFtp()
         {
             string caminhoArquivo = "/public_html/public/entregas/versao.txt";
@@ -170,15 +63,9 @@ namespace TeleBonifacio
             return this.Erro;
         }
 
-        public void setBarra(ref ProgressBar ProgressBar1)
+        public bool Download(string nmPasta, string nomeArquivoLocal, BackgroundWorker worker, long tamanhoTotalArquivo)
         {
-            this.ProgressBar1 = ProgressBar1;
-            Console.WriteLine("this.ProgressBar1 = ProgressBar1");
-        }
-
-        public bool Download(string nmPasta, string nomeArquivoLocal)
-        {
-            string Suri = "ftp://" + this.ftpIPServidor + @"/" + nmPasta+@"/"+ nomeArquivoLocal;
+            string Suri = "ftp://" + this.ftpIPServidor + @"/" + nmPasta + @"/" + nomeArquivoLocal;
             FtpWebRequest requisicaoFTP;
             requisicaoFTP = (FtpWebRequest)FtpWebRequest.Create(new Uri(Suri));
             requisicaoFTP.Credentials = new NetworkCredential(this.ftpUsuarioID, this.ftpSenha);
@@ -189,11 +76,22 @@ namespace TeleBonifacio
             try
             {
                 FtpWebResponse respDown = (FtpWebResponse)requisicaoFTP.GetResponse();
+                // tamanhoTotalArquivo = respDown.ContentLength;
                 Stream responseStream = respDown.GetResponseStream();
-                using (StreamReader readerD = new StreamReader(responseStream))
+                using (FileStream fileStream = File.Create(nomeArquivoLocal))
                 {
-                    string resposta = readerD.ReadToEnd();
-                    File.WriteAllText(nomeArquivoLocal, resposta);                                         
+                    byte[] buffer = new byte[1024];
+                    int bytesRead;                    
+                    while ((bytesRead = responseStream.Read(buffer, 0, buffer.Length)) > 0)
+                    {
+                        fileStream.Write(buffer, 0, bytesRead);
+                        bytesReceived += bytesRead;
+                        if (tamanhoTotalArquivo>0)
+                        {                            
+                            int progresso = (int)((bytesReceived * 100) / tamanhoTotalArquivo);
+                            worker.ReportProgress(progresso);
+                        }
+                    }
                 }
                 respDown.Close();
                 ret = true;
@@ -204,6 +102,7 @@ namespace TeleBonifacio
             }
             return ret;
         }
+
     }
 }
 

@@ -49,8 +49,7 @@ namespace ATCAtualizeitor
             this.MaximizeBox = false;
             this.Name = "Form1";
             this.Text = "Atualizador";
-            this.Shown += new System.EventHandler(this.Form1_Shown);
-            this.Enter += new System.EventHandler(this.Form1_Enter);
+            this.Load += new System.EventHandler(this.Form1_Load);
             this.ResumeLayout(false);
 
         }
