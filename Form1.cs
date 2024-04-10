@@ -12,8 +12,6 @@ namespace ATCAtualizeitor
     {
         private FTP cFPT;
         private BackgroundWorker worker;
-        private string nmPrograma = "TeleBonifacio.exe";
-
 
         public Form1()
         {
@@ -38,7 +36,6 @@ namespace ATCAtualizeitor
                 progressBar1.Value = value;
                 this.Text = "Atualizador " + value.ToString() + " %";
             }
-            Console.WriteLine(value.ToString());
         }
 
         private void Worker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
@@ -79,6 +76,14 @@ namespace ATCAtualizeitor
                 this.Invoke(new MethodInvoker(delegate { this.WindowState = FormWindowState.Minimized; }));
                 long bytesReceived = cFPT.bytesReceived;
                 cINI.WriteString("Config", "tamanho", bytesReceived.ToString());
+                int versaoFtp = cFPT.LerVersaoDoFtp();
+                string versaoNovaStr = $"{versaoFtp / 100}.{(versaoFtp / 10) % 10}.{versaoFtp % 10}";
+                string VersaoAnterior = cINI.ReadString("Config", "VersaoAtual", "");
+                if (VersaoAnterior.Length>0)
+                {
+                    cINI.WriteString("Config", "VersaoAnterior", versaoNovaStr);
+                }
+                cINI.WriteString("Config", "VersaoAtual", versaoNovaStr);
                 System.Threading.Thread.Sleep(1000);
                 e.Result = true;
             }
