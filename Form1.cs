@@ -53,24 +53,20 @@ namespace ATCAtualizeitor
             string nmPrograma = "TeleBonifacio.exe";
             string Pasta = @"/public_html/public/entregas/";
             string tamanho = cINI.ReadString("Config", "tamanho", "");
-            long tamanhoTotalArquivo = 0;
-            if (tamanho.Length>0)
-            {
-                tamanhoTotalArquivo = long.Parse(tamanho);
-            }            
+            long tamanhoTotalArquivo = tamanho.Length > 0 ? long.Parse(tamanho) : 0;
             if (cFPT.Download(Pasta, nmPrograma, worker, tamanhoTotalArquivo))
             {
-                string pastaprog = cINI.ReadString("Config", "Programa", "");
-                string pastaBak = pastaprog + @"\Bak";
-                if (!Directory.Exists(pastaBak))
+                string pastaAtual = EstaRodandoNoVisualStudio() ? @"C:\Prog\T-Bonifacio\T-Bonifacio\bin\Release\Atualizador" :     Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
+                string pastaPrograma = Path.Combine(pastaAtual, ".."); 
+                string pastaBackup = Path.Combine(pastaPrograma, "Bak");
+                if (!Directory.Exists(pastaBackup))
                 {
-                    Directory.CreateDirectory(pastaBak);
+                    Directory.CreateDirectory(pastaBackup);
                 }
-                string pastaLocal = AppDomain.CurrentDomain.BaseDirectory;
-                string arquivoLocal = Path.Combine(pastaLocal, nmPrograma);
-                string arquivoDestino = Path.Combine(pastaprog, nmPrograma);
-                string nmArqBak = pastaprog + @"\Bak" + @"\" + nmPrograma;
-                File.Copy(arquivoDestino, nmArqBak, true);
+                string arquivoLocal = Path.Combine(pastaAtual, nmPrograma);
+                string arquivoDestino = Path.Combine(pastaPrograma, nmPrograma);
+                string arquivoBackup = Path.Combine(pastaBackup, nmPrograma);
+                File.Copy(arquivoDestino, arquivoBackup, true);
                 File.Copy(arquivoLocal, arquivoDestino, true);
                 Process.Start(arquivoDestino);
                 this.Invoke(new MethodInvoker(delegate { this.WindowState = FormWindowState.Minimized; }));
@@ -91,6 +87,12 @@ namespace ATCAtualizeitor
             {
                 e.Result = false;
             }
+        }
+
+        private bool EstaRodandoNoVisualStudio()
+        {
+            string processoAtual = Process.GetCurrentProcess().ProcessName.ToLower();
+            return processoAtual.Contains("devenv");
         }
 
     }
