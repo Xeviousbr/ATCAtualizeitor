@@ -59,15 +59,23 @@ namespace ATCAtualizeitor
                 string pastaAtual = EstaRodandoNoVisualStudio() ? @"C:\Prog\T-Bonifacio\T-Bonifacio\bin\Release\Atualizador" :     Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
                 string pastaPrograma = Path.Combine(pastaAtual, ".."); 
                 string pastaBackup = Path.Combine(pastaPrograma, "Bak");
+                Loga("pastaAtual : " + pastaAtual);
+                Loga("pastaPrograma : " + pastaPrograma);
+                Loga("pastaBackup : " + pastaBackup);
                 if (!Directory.Exists(pastaBackup))
                 {
                     Directory.CreateDirectory(pastaBackup);
                 }
                 string arquivoLocal = Path.Combine(pastaAtual, nmPrograma);
-                string arquivoDestino = Path.Combine(pastaPrograma, nmPrograma);
+                string arquivoDestino = cINI.ReadString("Atualizador", "EstouEm", "");
                 string arquivoBackup = Path.Combine(pastaBackup, nmPrograma);
+                Loga("arquivoLocal : " + arquivoLocal);
+                Loga("arquivoDestino : " + arquivoDestino);
+                Loga("arquivoBackup : " + arquivoBackup);
                 File.Copy(arquivoDestino, arquivoBackup, true);
                 File.Copy(arquivoLocal, arquivoDestino, true);
+                System.Threading.Thread.Sleep(1000);
+                Loga("Executar programa em " + arquivoDestino);
                 Process.Start(arquivoDestino);
                 this.Invoke(new MethodInvoker(delegate { this.WindowState = FormWindowState.Minimized; }));
                 long bytesReceived = cFPT.bytesReceived;
@@ -93,6 +101,15 @@ namespace ATCAtualizeitor
         {
             string processoAtual = Process.GetCurrentProcess().ProcessName.ToLower();
             return processoAtual.Contains("devenv");
+        }
+
+        private void Loga(string message)
+        {
+            string logFilePath = @"C:\Entregas\Atualizador.txt";
+            using (StreamWriter writer = new StreamWriter(logFilePath, true))
+            {
+                writer.WriteLine($"{DateTime.Now}: {message}");
+            }
         }
 
     }
