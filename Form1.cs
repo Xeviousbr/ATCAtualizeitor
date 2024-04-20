@@ -12,6 +12,7 @@ namespace ATCAtualizeitor
     {
         private FTP cFPT;
         private BackgroundWorker worker;
+        private string arquivoDestino = "";
 
         public Form1()
         {
@@ -40,6 +41,9 @@ namespace ATCAtualizeitor
 
         private void Worker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
+            Loga("Acionando programa em "+ arquivoDestino);
+            Process.Start(arquivoDestino);
+            Loga("Fechando atualizador");
             Environment.Exit(0);
         }
 
@@ -56,9 +60,13 @@ namespace ATCAtualizeitor
             long tamanhoTotalArquivo = tamanho.Length > 0 ? long.Parse(tamanho) : 0;
             if (cFPT.Download(Pasta, nmPrograma, worker, tamanhoTotalArquivo))
             {
-                string pastaAtual = EstaRodandoNoVisualStudio() ? @"C:\Prog\T-Bonifacio\T-Bonifacio\bin\Release\Atualizador" :     Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
-                string pastaPrograma = Path.Combine(pastaAtual, ".."); 
-                string pastaBackup = Path.Combine(pastaPrograma, "Bak");
+                string pastaAtual = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
+                // string pastaAtual = EstaRodandoNoVisualStudio() ? @"C:\Prog\T-Bonifacio\T-Bonifacio\bin\Release\Atualizador" : Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
+                string pastaPrograma = Path.Combine(pastaAtual, "..");
+
+                string PastaDoEntregas = cINI.ReadString("Atualizador", "Programa", "");                
+                string pastaBackup = Path.Combine(PastaDoEntregas, "Bak");
+
                 Loga("pastaAtual : " + pastaAtual);
                 Loga("pastaPrograma : " + pastaPrograma);
                 Loga("pastaBackup : " + pastaBackup);
@@ -67,16 +75,17 @@ namespace ATCAtualizeitor
                     Directory.CreateDirectory(pastaBackup);
                 }
                 string arquivoLocal = Path.Combine(pastaAtual, nmPrograma);
-                string arquivoDestino = cINI.ReadString("Atualizador", "EstouEm", "");
+                string PastaDestino = cINI.ReadString("Config", "Programa", "");
                 string arquivoBackup = Path.Combine(pastaBackup, nmPrograma);
+                arquivoDestino = Path.Combine(PastaDestino, nmPrograma);
                 Loga("arquivoLocal : " + arquivoLocal);
                 Loga("arquivoDestino : " + arquivoDestino);
                 Loga("arquivoBackup : " + arquivoBackup);
                 File.Copy(arquivoDestino, arquivoBackup, true);
                 File.Copy(arquivoLocal, arquivoDestino, true);
-                System.Threading.Thread.Sleep(1000);
+                System.Threading.Thread.Sleep(100);
                 Loga("Executar programa em " + arquivoDestino);
-                Process.Start(arquivoDestino);
+                // Process.Start(arquivoDestino);
                 this.Invoke(new MethodInvoker(delegate { this.WindowState = FormWindowState.Minimized; }));
                 long bytesReceived = cFPT.bytesReceived;
                 cINI.WriteString("Config", "tamanho", bytesReceived.ToString());
@@ -97,11 +106,11 @@ namespace ATCAtualizeitor
             }
         }
 
-        private bool EstaRodandoNoVisualStudio()
-        {
-            string processoAtual = Process.GetCurrentProcess().ProcessName.ToLower();
-            return processoAtual.Contains("devenv");
-        }
+        //private bool EstaRodandoNoVisualStudio()
+        //{
+        //    string processoAtual = Process.GetCurrentProcess().ProcessName.ToLower();
+        //    return processoAtual.Contains("devenv");
+        //}
 
         private void Loga(string message)
         {
