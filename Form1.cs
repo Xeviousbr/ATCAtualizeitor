@@ -58,11 +58,14 @@ namespace ATCAtualizeitor
             string Pasta = @"/public_html/public/entregas/";
             string tamanho = cINI.ReadString("Config", "tamanho", "");
             long tamanhoTotalArquivo = tamanho.Length > 0 ? long.Parse(tamanho) : 0;
+            string pastaAtual = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
+            string arquivoLocal = Path.Combine(pastaAtual, nmPrograma);
+            string arquivoBackup = arquivoLocal.Replace("Atualizacao", "Bak");
+            File.Copy(arquivoDestino, arquivoBackup, true);
             if (cFPT.Download(Pasta, nmPrograma, worker, tamanhoTotalArquivo))
             {
                 long bytesReceived = cFPT.bytesReceived;
                 cINI.WriteString("Config", "tamanho", bytesReceived.ToString());
-                string pastaAtual = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
                 string pastaPrograma = Path.Combine(pastaAtual, "..");
                 string PastaDoEntregas = cINI.ReadString("Atualizacao", "Programa", "");                
                 string pastaBackup = Path.Combine(PastaDoEntregas, "Bak");
@@ -73,10 +76,7 @@ namespace ATCAtualizeitor
                 {
                     Directory.CreateDirectory(pastaBackup);
                 }
-                string arquivoLocal = Path.Combine(pastaAtual, nmPrograma);
                 string PastaDestino = cINI.ReadString("Config", "Programa", "");
-                string arquivoBackup = Path.Combine(pastaBackup, nmPrograma);
-                // arquivoDestino = Path.Combine(PastaDestino, nmPrograma);
                 Loga("arquivoLocal : " + arquivoLocal);
                 Loga("arquivoDestino : " + arquivoDestino);
                 Loga("arquivoBackup : " + arquivoBackup);
@@ -88,11 +88,10 @@ namespace ATCAtualizeitor
                     cINI.WriteString("Atualizador", "VersaoAnterior", versaoNovaStr);
                 }
                 cINI.WriteString("Config", "VersaoAtual", versaoNovaStr);
-                File.Copy(arquivoDestino, arquivoBackup, true);
+                System.Threading.Thread.Sleep(100);
                 File.Copy(arquivoLocal, arquivoDestino, true);
                 System.Threading.Thread.Sleep(100);
                 Loga("Executar programa em " + arquivoDestino);
-                // Process.Start(arquivoDestino);
                 this.Invoke(new MethodInvoker(delegate { this.WindowState = FormWindowState.Minimized; }));
                 System.Threading.Thread.Sleep(1000);
                 e.Result = true;
