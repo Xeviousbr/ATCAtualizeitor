@@ -12,7 +12,7 @@ namespace ATCAtualizeitor
     {
         private FTP cFPT;
         private BackgroundWorker worker;
-        private string arquivoDestino = "";
+        private string arquivoDestino = @"C:\Entregas\TeleBonifacio.exe";
 
         public Form1()
         {
@@ -40,7 +40,7 @@ namespace ATCAtualizeitor
         }
 
         private void Worker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
-        {
+        {            
             Loga("Acionando programa em "+ arquivoDestino);
             Process.Start(arquivoDestino);
             Loga("Fechando atualizador");
@@ -60,13 +60,12 @@ namespace ATCAtualizeitor
             long tamanhoTotalArquivo = tamanho.Length > 0 ? long.Parse(tamanho) : 0;
             if (cFPT.Download(Pasta, nmPrograma, worker, tamanhoTotalArquivo))
             {
+                long bytesReceived = cFPT.bytesReceived;
+                cINI.WriteString("Config", "tamanho", bytesReceived.ToString());
                 string pastaAtual = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
-                // string pastaAtual = EstaRodandoNoVisualStudio() ? @"C:\Prog\T-Bonifacio\T-Bonifacio\bin\Release\Atualizador" : Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
                 string pastaPrograma = Path.Combine(pastaAtual, "..");
-
-                string PastaDoEntregas = cINI.ReadString("Atualizador", "Programa", "");                
+                string PastaDoEntregas = cINI.ReadString("Atualizacao", "Programa", "");                
                 string pastaBackup = Path.Combine(PastaDoEntregas, "Bak");
-
                 Loga("pastaAtual : " + pastaAtual);
                 Loga("pastaPrograma : " + pastaPrograma);
                 Loga("pastaBackup : " + pastaBackup);
@@ -77,26 +76,24 @@ namespace ATCAtualizeitor
                 string arquivoLocal = Path.Combine(pastaAtual, nmPrograma);
                 string PastaDestino = cINI.ReadString("Config", "Programa", "");
                 string arquivoBackup = Path.Combine(pastaBackup, nmPrograma);
-                arquivoDestino = Path.Combine(PastaDestino, nmPrograma);
+                // arquivoDestino = Path.Combine(PastaDestino, nmPrograma);
                 Loga("arquivoLocal : " + arquivoLocal);
                 Loga("arquivoDestino : " + arquivoDestino);
                 Loga("arquivoBackup : " + arquivoBackup);
+                int versaoFtp = cFPT.LerVersaoDoFtp();
+                string versaoNovaStr = $"{versaoFtp / 100}.{(versaoFtp / 10) % 10}.{versaoFtp % 10}";
+                string VersaoAnterior = cINI.ReadString("Config", "VersaoAtual", "");
+                if (VersaoAnterior.Length > 0)
+                {
+                    cINI.WriteString("Atualizador", "VersaoAnterior", versaoNovaStr);
+                }
+                cINI.WriteString("Config", "VersaoAtual", versaoNovaStr);
                 File.Copy(arquivoDestino, arquivoBackup, true);
                 File.Copy(arquivoLocal, arquivoDestino, true);
                 System.Threading.Thread.Sleep(100);
                 Loga("Executar programa em " + arquivoDestino);
                 // Process.Start(arquivoDestino);
                 this.Invoke(new MethodInvoker(delegate { this.WindowState = FormWindowState.Minimized; }));
-                long bytesReceived = cFPT.bytesReceived;
-                cINI.WriteString("Config", "tamanho", bytesReceived.ToString());
-                int versaoFtp = cFPT.LerVersaoDoFtp();
-                string versaoNovaStr = $"{versaoFtp / 100}.{(versaoFtp / 10) % 10}.{versaoFtp % 10}";
-                string VersaoAnterior = cINI.ReadString("Config", "VersaoAtual", "");
-                if (VersaoAnterior.Length>0)
-                {
-                    cINI.WriteString("Config", "VersaoAnterior", versaoNovaStr);
-                }
-                cINI.WriteString("Config", "VersaoAtual", versaoNovaStr);
                 System.Threading.Thread.Sleep(1000);
                 e.Result = true;
             }

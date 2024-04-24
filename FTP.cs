@@ -20,6 +20,7 @@ namespace TeleBonifacio
         private string Erro = "";
         private ProgressBar ProgressBar1= null;
         public long bytesReceived = 0;
+        private string Mensagem = "";
 
         public FTP(string ftpIPServidor, string ftpUsuarioID, string ftpSenha)
         {
@@ -32,6 +33,7 @@ namespace TeleBonifacio
         {
 
         }
+
         public int LerVersaoDoFtp()
         {
             string caminhoArquivo = "/public_html/public/entregas/versao.txt";
@@ -50,13 +52,50 @@ namespace TeleBonifacio
             }
             Stream responseStream = response.GetResponseStream();
             StreamReader reader = new StreamReader(responseStream);
-            string versaoTexto = reader.ReadToEnd();
+            string info = reader.ReadToEnd();
+            string[] lines = info.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+            string versaoTexto = lines[0];
+            if (lines.Length > 1)
+            {
+                this.Mensagem = lines[1];
+            }
             reader.Close();
             responseStream.Close();
             response.Close();
-            int versaoNumero = int.Parse(versaoTexto.Replace(".",""));
+            int versaoNumero = int.Parse(versaoTexto.Replace(".", ""));
             return versaoNumero;
         }
+
+        public string retMensagem()
+        {
+            return this.Mensagem;
+        }
+
+        //public int LerVersaoDoFtp()
+        //{
+        //    string caminhoArquivo = "/public_html/public/entregas/versao.txt";
+        //    FtpWebRequest request = (FtpWebRequest)WebRequest.Create(new Uri("ftp://" + this.ftpIPServidor + caminhoArquivo));
+        //    request.Credentials = new NetworkCredential(this.ftpUsuarioID, this.ftpSenha);
+        //    request.Method = WebRequestMethods.Ftp.DownloadFile;
+        //    request.UsePassive = true;
+        //    FtpWebResponse response;
+        //    try
+        //    {
+        //        response = (FtpWebResponse)request.GetResponse();
+        //    }
+        //    catch (WebException ex)
+        //    {
+        //        throw new Exception("Erro ao conectar ao servidor FTP: " + ex.Message);
+        //    }
+        //    Stream responseStream = response.GetResponseStream();
+        //    StreamReader reader = new StreamReader(responseStream);
+        //    string versaoTexto = reader.ReadToEnd();
+        //    reader.Close();
+        //    responseStream.Close();
+        //    response.Close();
+        //    int versaoNumero = int.Parse(versaoTexto.Replace(".",""));
+        //    return versaoNumero;
+        //}
 
         public string getErro()
         {
