@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Data.OleDb;
 using System.Diagnostics;
 using System.IO;
 using System.Windows.Forms;
@@ -13,6 +15,10 @@ namespace ATCAtualizeitor
         private FTP cFPT;
         private BackgroundWorker worker;
         private string arquivoDestino = @"C:\Entregas\TeleBonifacio.exe";
+        private INI cINI;
+        private string connectionString = "";
+        private int erros = 0;
+        private string ERRO = "";
 
         public Form1()
         {
@@ -41,6 +47,18 @@ namespace ATCAtualizeitor
 
         private void Worker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {            
+            if (erros>0)
+            {
+                string mensagem = "";
+                if (erros==1)
+                {
+                    mensagem = ERRO;
+                } else
+                {
+                    mensagem = "Olhe o log para er os erros";
+                }
+                MessageBox.Show(mensagem, "Houveram erros de SQL", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
             Loga("Acionando programa em "+ arquivoDestino);
             Process.Start(arquivoDestino);
             Loga("Fechando atualizador");
@@ -49,7 +67,7 @@ namespace ATCAtualizeitor
 
         private void Worker_DoWork(object sender, DoWorkEventArgs e)
         {
-            INI cINI = new INI();
+            cINI = new INI();
             string URL = cINI.ReadString("FTP", "URL", "");
             string user = Cripto.Decrypt(cINI.ReadString("FTP", "user", ""));
             string senha = Cripto.Decrypt(cINI.ReadString("FTP", "pass", ""));
@@ -87,6 +105,17 @@ namespace ATCAtualizeitor
                 {
                     cINI.WriteString("Atualizador", "VersaoAnterior", versaoNovaStr);
                 }
+                List<string> ComandosSQL = cFPT.getComandos();
+                if (ComandosSQL.Count>0)
+                {
+                    string CaminhoBase = cINI.ReadString("Config", "Base", "");
+                    connectionString = @"Provider=Microsoft.Jet.OLEDB.4.0;Data Source=" + CaminhoBase + ";";
+                    for (int i = 0; i < ComandosSQL.Count; i++)
+                    {
+                        Loga(ComandosSQL[i]);
+                        ExecutarComandoSQL(ComandosSQL[i]);
+                    }
+                }
                 cINI.WriteString("Config", "VersaoAtual", versaoNovaStr);
                 System.Threading.Thread.Sleep(100);
                 File.Copy(arquivoLocal, arquivoDestino, true);
@@ -102,12 +131,6 @@ namespace ATCAtualizeitor
             }
         }
 
-        //private bool EstaRodandoNoVisualStudio()
-        //{
-        //    string processoAtual = Process.GetCurrentProcess().ProcessName.ToLower();
-        //    return processoAtual.Contains("devenv");
-        //}
-
         private void Loga(string message)
         {
             string logFilePath = @"C:\Entregas\Atualizador.txt";
@@ -116,6 +139,28 @@ namespace ATCAtualizeitor
                 writer.WriteLine($"{DateTime.Now}: {message}");
             }
         }
+
+        private void ExecutarComandoSQL(string query)
+        {
+            using (OleDbConnection connection = new OleDbConnection(connectionString))
+            {
+                using (OleDbCommand command = new OleDbCommand(query, connection))
+                {
+                    connection.Open();
+                    try
+                    {
+                        command.ExecuteNonQuery();
+                    }
+                    catch (Exception Ex)
+                    {
+                        this.erros++;
+                        this.ERRO = Ex.ToString();
+                        Loga(this.ERRO);
+                    }                    
+                }
+            }
+        }
+
 
     }
 }

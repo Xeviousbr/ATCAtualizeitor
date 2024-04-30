@@ -21,6 +21,7 @@ namespace TeleBonifacio
         private ProgressBar ProgressBar1= null;
         public long bytesReceived = 0;
         private string Mensagem = "";
+        private List<string> ComandosSQL { get; set; }
 
         public FTP(string ftpIPServidor, string ftpUsuarioID, string ftpSenha)
         {
@@ -55,9 +56,21 @@ namespace TeleBonifacio
             string info = reader.ReadToEnd();
             string[] lines = info.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
             string versaoTexto = lines[0];
-            if (lines.Length > 1)
+            this.Mensagem = lines[1];
+            this.ComandosSQL = new List<string>();
+            for (int i = 2; i < lines.Length; i++)
             {
-                this.Mensagem = lines[1];
+                string line = lines[i].Trim();
+                if (!string.IsNullOrEmpty(line))
+                {
+                    string comandoSQL = line;
+                    while (!comandoSQL.EndsWith(";") && i + 1 < lines.Length)
+                    {
+                        i++;
+                        comandoSQL += " " + lines[i].Trim();
+                    }
+                    ComandosSQL.Add(comandoSQL);
+                }
             }
             reader.Close();
             responseStream.Close();
@@ -71,31 +84,10 @@ namespace TeleBonifacio
             return this.Mensagem;
         }
 
-        //public int LerVersaoDoFtp()
-        //{
-        //    string caminhoArquivo = "/public_html/public/entregas/versao.txt";
-        //    FtpWebRequest request = (FtpWebRequest)WebRequest.Create(new Uri("ftp://" + this.ftpIPServidor + caminhoArquivo));
-        //    request.Credentials = new NetworkCredential(this.ftpUsuarioID, this.ftpSenha);
-        //    request.Method = WebRequestMethods.Ftp.DownloadFile;
-        //    request.UsePassive = true;
-        //    FtpWebResponse response;
-        //    try
-        //    {
-        //        response = (FtpWebResponse)request.GetResponse();
-        //    }
-        //    catch (WebException ex)
-        //    {
-        //        throw new Exception("Erro ao conectar ao servidor FTP: " + ex.Message);
-        //    }
-        //    Stream responseStream = response.GetResponseStream();
-        //    StreamReader reader = new StreamReader(responseStream);
-        //    string versaoTexto = reader.ReadToEnd();
-        //    reader.Close();
-        //    responseStream.Close();
-        //    response.Close();
-        //    int versaoNumero = int.Parse(versaoTexto.Replace(".",""));
-        //    return versaoNumero;
-        //}
+        public List<string> getComandos()
+        {
+            return this.ComandosSQL;
+        }
 
         public string getErro()
         {
